@@ -40,7 +40,7 @@ std::string Integer::str() const
   return std::to_string (number);
 }
 
-Expression_Tree* Integer::clone() const 
+Integer* Integer::clone() const 
 {
   return new Integer{number};
 }
@@ -52,11 +52,13 @@ long double Real::evaluate() const
 
 std::string Real::str() const 
 {
-  return std::to_string (decimal);
+  stringstream sst;
+  sst << decimal;
+  return sst.str();
 }
   
 
-Expression_Tree* Real::clone() const 
+Real* Real::clone() const 
 {
   return new Real{decimal};
 }
@@ -78,10 +80,10 @@ long double Variable::get_value() const
 
 void Variable::set_value(long double val)
 {
-  value=val;
+  value = val;
 }
 
-Expression_Tree* Variable::clone() const
+Variable* Variable::clone() const
 {
   return new Variable{variabel, value};
 }
@@ -93,10 +95,16 @@ long double Assign::evaluate() const
 
   Variable* point;
   point = dynamic_cast<Variable*>(leftop); 
-  point->set_value(op); 
 
-  return op;
-
+  if (point == nullptr)
+    {
+      throw expression_tree_error {"no expression tree"};
+    }
+  else
+    {
+      point->set_value(op); 
+      return op;
+    }
 }
 
 std::string Assign::str() const 
@@ -105,7 +113,7 @@ std::string Assign::str() const
 }
  
 
-Expression_Tree* Assign::clone() const 
+Assign* Assign::clone() const 
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();
@@ -125,7 +133,7 @@ std::string Plus::str() const
 }
 
 
-Expression_Tree* Plus::clone() const 
+Plus* Plus::clone() const 
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();
@@ -145,7 +153,7 @@ std::string Minus::str() const
 }
 
 
-Expression_Tree* Minus::clone() const
+Minus* Minus::clone() const
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();
@@ -164,7 +172,7 @@ std::string Times::str() const
   return "*";
 }
 
-Expression_Tree* Times::clone() const 
+Times* Times::clone() const 
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();
@@ -190,7 +198,7 @@ std::string Divide::str() const
   return "/";
 }
 
-Expression_Tree* Divide::clone() const 
+Divide* Divide::clone() const 
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();
@@ -209,7 +217,7 @@ std::string Power::str() const
   return "^";
 }
 
-Expression_Tree* Power::clone() const
+Power* Power::clone() const
 {
   Expression_Tree* newleft = leftop->clone();
   Expression_Tree* newright = rightop->clone();

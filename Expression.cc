@@ -17,14 +17,46 @@ using namespace std;
 
 Expression::Expression(Expression_Tree* p) : pointer{p} {}
 
-/*
- * evaluate()
- */
+Expression::~Expression() 
+{
+  delete pointer;
+  pointer = nullptr;
+}
+
+Expression::Expression(Expression&& other)
+{
+  swap(other);
+}
+
+Expression::Expression(const Expression& other)
+{
+  if (other.pointer != nullptr)
+    {
+      this->pointer = other.pointer->clone();
+    }
+  else
+    {
+      this->pointer = nullptr;
+    }
+}
+
+Expression& Expression:: operator = (Expression&& other)
+{
+  swap(other);
+  return *this;
+}
+
+Expression& Expression:: operator = (const Expression& other)
+{
+  this->pointer = other.pointer->clone();
+  return *this;
+}
+
 long double Expression::evaluate() const
 {
   if (pointer == nullptr)
     {
-      return 0;  
+      throw expression_error {"no expression to evaluate"};  
     }
   else
     {
@@ -38,7 +70,7 @@ std::string Expression::get_postfix() const
 {
   if (pointer == nullptr)
     {
-      return "0";
+      throw expression_error {"no expression"};
     }
   else
     {
@@ -56,17 +88,24 @@ bool Expression::empty() const
 
 void Expression::print_tree(std::ostream&) const
 {
-  pointer->print(cout);
+  if (pointer == nullptr)
+    {
+      throw expression_error {"no expression"};
+    }
+  else
+    {
+      pointer->print(cout);
+    }
 }
 
 
-void Expression::swap(Expression& e2)
+void Expression::swap(Expression& e2) noexcept
 {
   std::swap(pointer, e2.pointer);
 }
 
 
-void swap(Expression& e1, Expression& e2)
+void swap(Expression& e1, Expression& e2) noexcept
 {
   e1.swap(e2);
 }
@@ -189,16 +228,14 @@ namespace
 	 {
 	    if (!last_was_operand || postfix.empty() || previous_token == "(")
 	    {
-	       std::cerr << "operator där operand förväntades\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"operator där operand förväntades\n"};
 	    }
 
 	    if (token == "=")
 	    {
 	       if (assignment)
 	       {
-		  std::cerr << "multipel tilldelning";
-		  exit(EXIT_FAILURE);
+		 throw expression_error {"multipel tilldelning"};
 	       }
 	       else
 	       {
@@ -225,14 +262,12 @@ namespace
 	 {
 	    if (paren_count == 0)
 	    {
-	       std::cerr << "vänsterparentes saknas\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"vänsterparentes saknas\n"};
 	    }
 
 	    if (previous_token == "(" && !postfix.empty())
 	    {
-	       std::cerr << "tom parentes\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"tom parentes\n"};
 	    }
 
 	    while (!operator_stack.empty() && operator_stack.top() != "(")
@@ -243,8 +278,7 @@ namespace
 
 	    if (operator_stack.empty())
 	    {
-	       std::cerr << "högerparentes saknar matchande vänsterparentes\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"högerparentes saknar matchande vänsterparentes\n"};
 	    }
 	    // Det finns en vänsterparentes på stacken
 	    operator_stack.pop();
@@ -254,8 +288,7 @@ namespace
 	 {
 	    if (last_was_operand || previous_token == ")")
 	    {
-	       std::cerr << "operand där operator förväntades\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"operand där operator förväntades\n"};
 	    }
 
 	    postfix += token + ' ';
@@ -263,8 +296,7 @@ namespace
 	 }
 	 else
 	 {
-	    std::cerr << "otillåten symbol\n";
-	    exit(EXIT_FAILURE);
+	   throw expression_error {"otillåten symbol\n"};
 	 }
 
 	 previous_token = token;
@@ -272,20 +304,17 @@ namespace
 
       if (postfix == "")
       {
-	 std::cerr << "tomt infixuttryck!\n";
-	 exit(EXIT_FAILURE);
+	throw expression_error {"tomt infixuttryck!\n"};
       }
 
       if (!last_was_operand && !postfix.empty())
       {
-	 std::cerr << "operator avslutar\n";
-	 exit(EXIT_FAILURE);
+	throw expression_error {"operator avslutar\n"};
       }
 
       if (paren_count > 0)
       {
-	 std::cerr << "högerparentes saknas\n";
-	 exit(EXIT_FAILURE);
+	throw expression_error {"högerparentes saknas\n"};
       }
 
       while (!operator_stack.empty())
@@ -321,16 +350,14 @@ namespace
 	 {
 	    if (tree_stack.empty()) 
 	    {
-	       std::cerr << "felaktig postfix\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"felaktig postfix\n"};
 	    }
 	    Expression_Tree* rhs{tree_stack.top()};
 	    tree_stack.pop();
 
 	    if (tree_stack.empty()) 
 	    {
-	       std::cerr << "felaktig postfix\n";
-	       exit(EXIT_FAILURE);
+	      throw expression_error {"felaktig postfix\n"};
 	    }
 	    Expression_Tree* lhs{tree_stack.top()};
 	    tree_stack.pop();
@@ -374,21 +401,21 @@ namespace
 	 }
 	 else
 	 {
-	    std::cerr << "felaktig postfix\n";
-	    exit(EXIT_FAILURE);
+	   throw expression_error {"felaktig postfix\n"};
 	 }
       }
       }
    catch (const exception& e)
    {
-      cout << "undantag fångat: " << e.what() << '\n';
+     delete tree_stack.top();
+     tree_stack.pop();
+     cout << "undantag fångat: " << e.what() << '\n';
    }
       // Det ska bara finnas ett träd på stacken om korrekt postfix.
 
       if (tree_stack.empty())
       {
-	 std::cerr << "ingen postfix given\n";
-	 exit(EXIT_FAILURE);
+	throw expression_error {"ingen postfix given\n"};
       }
 
       if (tree_stack.size() > 1)
@@ -398,8 +425,7 @@ namespace
 	    delete tree_stack.top();
 	    tree_stack.pop();
 	 }
-	 std::cerr << "felaktig postfix\n";
-	 exit(EXIT_FAILURE);
+	 throw expression_error {"felaktig postfix\n"};
       }
 
       // Returnera trädet.

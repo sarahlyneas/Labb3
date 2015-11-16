@@ -4,6 +4,7 @@
 #ifndef EXPRESSIONTREE_H
 #define EXPRESSIONTREE_H
 #include <iosfwd>
+#include <sstream>
 #include <string>
 #include <stdexcept>
 #include <cmath>
@@ -28,12 +29,12 @@ class expression_tree_error : public std::logic_error
 class Expression_Tree
 {
 public:
-   virtual long double      evaluate() const = 0;
-   virtual std::string      str() const = 0;
-   virtual std::string      get_postfix() const = 0;
-   virtual void             print(std::ostream&, int counter=3) const = 0;
-   virtual Expression_Tree* clone() const = 0;
-   virtual ~Expression_Tree() = default;
+  virtual long double      evaluate() const = 0;
+  virtual std::string      str() const = 0;
+  virtual std::string      get_postfix() const = 0;
+  virtual void             print(std::ostream&, int counter=3) const = 0;
+  virtual Expression_Tree* clone() const = 0;
+  virtual ~Expression_Tree() = default;
 };
 
 class Binary_Operator : public Expression_Tree
@@ -46,11 +47,17 @@ public:
 
 protected:
 
-  ~Binary_Operator() = default;
+  ~Binary_Operator() 
+  {
+    delete leftop;
+    delete rightop;
+  };
   Binary_Operator (Expression_Tree* number1, Expression_Tree* number2) : leftop{number1}, rightop{number2} {}
   Expression_Tree* leftop{};
   Expression_Tree* rightop{};
 
+  Binary_Operator& operator =(const Binary_Operator&) = delete;
+  Binary_Operator(const Binary_Operator&) = delete;
 	
 };
 
@@ -67,6 +74,10 @@ protected:
   Operand() noexcept = default;
   ~Operand() = default;
 
+private:
+  Operand& operator =(const Operand&) = delete;
+  Operand(const Operand&) = delete;
+
 };
 
 
@@ -74,21 +85,24 @@ protected:
 class Integer : public Operand
 {
 
- public:
+public:
   Integer (long long int tal) : number{tal} {}
 
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Integer* clone() const override;
 
 protected:
-   Integer() noexcept = default;
+  Integer() noexcept = default;
   ~Integer() = default;
 
- private:
-   long long int number{};
+private:
+  long long int number{};
+  Integer& operator =(const Integer&) = delete;
+  Integer(const Integer&) = delete;
+
 };
 
 
@@ -96,27 +110,29 @@ protected:
 
 class Real : public Operand
 {
- public:
+public:
   Real (long double real) : decimal{real} {}
 
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Real* clone() const override;
 
 protected:
   Real() noexcept = default;
   ~Real() = default;
 
- private:
-    long double decimal{};
+private:
+  long double decimal{};
+  Real& operator =(const Real&) = delete;
+  Real(const Real&) = delete;
 };
 
 class Variable : public Operand
 {
 
- public:
+public:
   Variable (std::string ar, long double val=0) : variabel{ar}, value{val} {}
 
   long double evaluate() const override;
@@ -127,7 +143,7 @@ class Variable : public Operand
 
   void set_value(long double val);
 
-  Expression_Tree* clone() const override;
+  Variable* clone() const override;
 
 protected:
   Variable() noexcept = default;
@@ -137,6 +153,9 @@ private:
 
   std::string variabel{};
   long double value{};
+  Variable& operator =(const Variable&) = delete;
+  Variable(const Variable&) = delete;
+
 };
 
 class Assign : public Binary_Operator
@@ -148,14 +167,11 @@ public:
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Assign* clone() const override;
 
-protected:
-  ~Assign() 
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Assign& operator =(const Assign&) = delete;
+  Assign(const Assign&) = delete;
 
 };
 
@@ -163,105 +179,95 @@ protected:
 
 class Plus : public Binary_Operator
 { 
- public:
+public:
   Plus (Expression_Tree* leftop, Expression_Tree* rightop) : Binary_Operator{leftop, rightop} {}
   
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Plus* clone() const override;
 
-protected:
-  ~Plus() 
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Plus& operator =(const Plus&) = delete;
+  Plus(const Plus&) = delete;
+
 };
 
 
 
 class Minus : public Binary_Operator 
 {
- public:
+public:
   Minus (Expression_Tree* leftop, Expression_Tree* rightop) : Binary_Operator{leftop, rightop} {}
   
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Minus* clone() const override;
 
-protected:
-  ~Minus() 
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Minus& operator =(const Minus&) = delete;
+  Minus(const Minus&) = delete;
+
 };
 
 
 
 class Times : public Binary_Operator
 {
- public:
+public:
   Times (Expression_Tree* leftop, Expression_Tree* rightop) : Binary_Operator{leftop, rightop} {}
   
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Times* clone() const override;
 
-protected:
-  ~Times() 
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Times& operator =(const Times&) = delete;
+  Times(const Times&) = delete;
+
 };
 
 
 
 class Divide : public Binary_Operator
 {
- public:
+public:
   Divide (Expression_Tree* leftop, Expression_Tree* rightop) : Binary_Operator{leftop, rightop} {}
   
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Divide* clone() const override;
 
-protected:
-  ~Divide() 
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Divide& operator =(const Divide&) = delete;
+  Divide(const Divide&) = delete;
+
 };
 
 
 
 class Power: public Binary_Operator
 {
- public:
+public:
   Power (Expression_Tree* leftop, Expression_Tree* rightop) : Binary_Operator{leftop, rightop} {}
   
   long double evaluate() const override;
 
   std::string str() const override;
 
-  Expression_Tree* clone() const override;
+  Power* clone() const override;
 
-protected:
-  ~Power()
-  {
-    delete leftop;
-    delete rightop;
-  };
+private:
+  Power& operator =(const Power&) = delete;
+  Power(const Power&) = delete;
+
 };
 
 

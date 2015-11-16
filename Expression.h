@@ -35,13 +35,20 @@ public:
   std::string get_postfix() const;
   bool        empty() const;
   void        print_tree(std::ostream&) const;
-  void        swap(Expression&);
+  void        swap(Expression&) noexcept;
+
+  ~Expression();
+  Expression(Expression&& other);
+  Expression(const Expression& other);
+
+  Expression& operator = (Expression&& other);
+  Expression& operator = (const Expression& other);
 
  private:
    class Expression_Tree* pointer{nullptr};
 };
 
-void swap(Expression&, Expression&);
+void swap(Expression&, Expression&) noexcept;
 
 /**
  * make_expression: Hjälpfunktion för att skapa ett Expression-objekt, givet
